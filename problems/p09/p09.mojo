@@ -106,7 +106,7 @@ def main():
         print()
 
         with DeviceContext() as ctx:
-            input_buf = ctx.enqueue_create_buffer[dtype](0)
+            input_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             result_buf = ctx.enqueue_create_buffer[dtype](SIZE)
             result_buf.enqueue_fill(0)
 
