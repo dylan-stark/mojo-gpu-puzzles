@@ -26,7 +26,44 @@ fn conv_1d_simple[
 ):
     global_i = block_dim.x * block_idx.x + thread_idx.x
     local_i = Int(thread_idx.x)
-    # FILL ME IN (roughly 14 lines)
+
+    shared_output = LayoutTensor[
+        dtype,
+        out_layout,
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    shared_a = LayoutTensor[
+        dtype,
+        in_layout,
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    shared_b = LayoutTensor[
+        dtype,
+        conv_layout,
+        MutAnyOrigin,
+        address_space = AddressSpace.SHARED,
+    ].stack_allocation()
+
+    if global_i < SIZE:
+        shared_a[local_i] = a[global_i]
+    if global_i < CONV:
+        shared_b[local_i] = b[global_i]
+
+    barrier()
+
+    if global_i < SIZE:
+        width = Int(SIZE - global_i)
+        for i in range(width):
+            shared_output[local_i] += shared_a[local_i + i] * shared_b[i]
+
+    barrier()
+
+    if global_i < SIZE:
+        output[global_i] = shared_output[local_i]
 
 
 # ANCHOR_END: conv_1d_simple
